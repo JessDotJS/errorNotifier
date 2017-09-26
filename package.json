@@ -1,0 +1,33 @@
+{
+  "name": "errornotifier",
+  "version": "1.0.0",
+  "description": "CryptoWay Error Notifier",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JessDotJS/errorNotifier.git"
+  },
+  "author": "Atomic Software",
+  "license": "ISC",
+  "homepage": "https://github.com/JessDotJS/errorNotifier",
+  "dependencies": {
+    "es6-promise": "^4.1.1",
+    "firebase-admin": "^5.2.1",
+    "request": "^2.82.0",
+    "rxjs": "^5.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^8.0.24",
+    "@types/mocha": "*",
+    "@types/nodemailer": "^3.1.1",
+    "@types/pug": "^2.0.4",
+    "typescript": "^2.4.2",
+    "mocha": "^3.5.0",
+    "chai": "*",
+    "sinon": "^3.2.1"
+  }
+}
