@@ -1,64 +1,97 @@
 import admin = require('firebase-admin');
-import {Observable} from 'rxjs/Observable';
+import { Observable } from 'rxjs/Observable';
+import { environment } from "./environment";
 
+let config = {
+    credential: admin.credential.cert(environment.firebaseConfig.credential),
+    databaseURL: environment.firebaseConfig.databaseURL
+}
+
+let decoratorApp = admin.initializeApp(config, 'decoratorApp');
 /**
- * Helper funcion, this function saves the error to the firebase error.
+ * Helper funcion, this function saves the error to the firebase error. The function expects firebase to be working ok.
+ * If not the function will fail (Silently)
  * @param err The error that trigered the decorator
  * @param api_name The name of the api.
- * @param methodName The name of the method that triggered the error
- * @param args Arguments returned by the error
  */
-function saveErrorToFirebase(err: any, api_name: string, methodName: string, args?: any[]): void {
-    let timestamp = new Date().getTime();
+function saveErrorToFirebase(err: any, api_name: string, methodName: string, args?: any[]): string | number {
+    let timestamp = admin.database.ServerValue.TIMESTAMP
     let error = {
-        timestamp: timestamp, 
-        error: (err instanceof Error) ? {message: err.message, callstack: err.stack} : err,
+        timestamp: timestamp,
+        error: (err instanceof Error) ? { message: err.message, callstack: err.stack } : err,
         args: (!args.length) ? "no arguments" : args,
-        methodName: methodName,
-        '.priority': -(timestamp) // Sort Descending by date
+        methodName: methodName
     };
-    admin.database().ref(`api_errors/${api_name}`).push(error)
-        .catch((error) => {
+    let keyVal: string | number;
+    let key: admin.database.ThenableReference;
+    if (err.keyVal) {
+        keyVal = err.keyVal;
+        decoratorApp.database().ref(`api_errors/${api_name}` + keyVal).child('at').set(error, (error) => {
             /**
              * Maybe some logging here
              */
-            console.log(error);
+            if(error)
+                console.log(error);
         });
-}
+        keyVal += `/at`;
+    } else {
+        key = decoratorApp.database().ref(`api_errors/${api_name}`).push(error, (error) => {
+            /**
+             * Maybe some logging here
+             */
+            if (error)
+                console.log(error); 
+        });
+        keyVal = `/${key.key}`;
+    }
+    return keyVal;
 
+}
 /**
  * In case of some error, this function will modify the function to catch that error and send it to the Firebase database
  * @param api_name The name of the api to log the error
  */
 export function errorNotifier(api_name: string) {
     return function (prot: any, propertyKey: string, descriptor: PropertyDescriptor) {
-        if(!prot[propertyKey]){
+        if (!prot[propertyKey]) {
             prot[propertyKey]();
         };
-        prot['container_'+propertyKey] = prot[propertyKey];
-        prot[propertyKey] = function (... args) {
+        const oldFuncVal = descriptor.value;
+        descriptor.value = function (...args) {
             try {
-                let fun = prot['container_'+propertyKey];
-                let retVal: Observable<any> | Promise<any> | any = fun(... args);
-                if(retVal) {
-                    if (retVal instanceof Promise){
+                let retVal: Observable<any> | Promise<any> | any = oldFuncVal.apply(this, args);
+                if (retVal) {
+                    if (retVal instanceof Promise) {
                         retVal.catch((err) => {
-                            saveErrorToFirebase(err,api_name,propertyKey,args);
-                            throw err;
+                            auxErrorCatch(err, api_name, propertyKey, args);
                         });
-                    }else if (retVal instanceof Observable) {
-                        retVal.subscribe({ error: function (err)  {
-                            console.log(err);
-                            saveErrorToFirebase(err,api_name,propertyKey,args);
-                        }});
+                    } else if (retVal instanceof Observable) {
+                        retVal.subscribe({
+                            error: function (err) {
+                                try{
+                                    auxErrorCatch(err, api_name, propertyKey, args);
+                                } catch(error) {}
+                            }
+                        });
                     }
                     return retVal;
                 }
                 return;
             } catch (error) {
-                saveErrorToFirebase(error,api_name,propertyKey,args);
-                throw error;
+                auxErrorCatch(error, api_name, propertyKey, args);
             }
-        }
+        };
+        return descriptor;
     }
+}
+
+function auxErrorCatch(err: any, api_name: string, propertyKey: string, args: any[]): never {
+    let keyval: string | number;
+    let newErr: Error | string | number = err;
+    if (typeof err === "string" || typeof err === "number") {
+        newErr = new Error(err + "");
+    }
+    keyval = saveErrorToFirebase(newErr, api_name, propertyKey, args);
+    newErr["keyVal"] = keyval;
+    throw newErr;
 }
