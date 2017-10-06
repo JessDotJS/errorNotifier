@@ -2,12 +2,10 @@ import admin = require('firebase-admin');
 import { Observable } from 'rxjs/Observable';
 import { environment } from "./environment";
 
-let config = {
-    credential: admin.credential.cert(environment.firebaseConfig.credential),
-    databaseURL: environment.firebaseConfig.databaseURL
-}
-
-let decoratorApp = admin.initializeApp(config, 'decoratorApp');
+/**
+ * WARNING: You must have the app initialized for the notifier to work.
+ */
+let decoratorApp = admin.app();
 /**
  * Helper funcion, this function saves the error to the firebase error. The function expects firebase to be working ok.
  * If not the function will fail (Silently)
