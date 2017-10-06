@@ -1,6 +1,6 @@
 {
   "name": "errornotifier",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "CryptoWay Error Notifier",
   "main": "ErrorNotifier.js",
   "scripts": {
