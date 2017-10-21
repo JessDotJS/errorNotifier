@@ -11,7 +11,7 @@ let decoratorApp = admin.app();
  * Cleans the arguments so thet don't have the forbiden chars.
  * @param object 
  */
-function sanitizeData(object: any): any {
+function sanitizeData(object: any, index?: number, array?: any[]): any {
     let new_obj: any;
     if (typeof object === 'object'){
         new_obj = {};
@@ -23,12 +23,12 @@ function sanitizeData(object: any): any {
             || key.includes('/') 
             || key.includes('[') 
             || key.includes(']')) {
-                new_key = key.replace('$','(dolar)')
-                .replace('.','(dot)')
-                .replace('#','numeral')
-                .replace('/','(slash)')
-                .replace('[','(openBracket)')
-                .replace(']','(closeBracket)');
+                new_key = key.replace('$','')
+                .replace('.','')
+                .replace('#','')
+                .replace('/','')
+                .replace('[','')
+                .replace(']','');
 
             } else {
                 new_key = key;
@@ -53,7 +53,7 @@ function saveErrorToFirebase(err: any, api_name: string, methodName: string, arg
     let error = {
         timestamp: timestamp,
         error: (err instanceof Error) ? { message: err.message, callstack: err.stack } : err,
-        args: (!args.length) ? "no arguments" : sanitizeData(args),
+        args: (!args.length) ? "no arguments" : args.map(sanitizeData),
         methodName: methodName
     };
     let keyVal: string | number;
