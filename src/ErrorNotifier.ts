@@ -6,6 +6,41 @@ import { environment } from "./environment";
  * WARNING: You must have the app initialized for the notifier to work.
  */
 let decoratorApp = admin.app();
+
+/**
+ * Cleans the arguments so thet don't have the forbiden chars.
+ * @param object 
+ */
+function sanitizeData(object: any): any {
+    let new_obj: any;
+    if (typeof object === 'object'){
+        new_obj = {};
+        let new_key: string
+        for(let key in object){
+            if (key.includes('$') 
+            || key.includes('.') 
+            || key.includes('#') 
+            || key.includes('/') 
+            || key.includes('[') 
+            || key.includes(']')) {
+                new_key = key.replace('$','(dolar)')
+                .replace('.','(dot)')
+                .replace('#','numeral')
+                .replace('/','(slash)')
+                .replace('[','(openBracket)')
+                .replace(']','(closeBracket)');
+
+            } else {
+                new_key = key;
+            }
+            new_obj[new_key] = object[key];
+        }
+        return new_obj;
+    } else {
+        return object;
+    }
+}
+
 /**
  * Helper funcion, this function saves the error to the firebase error. The function expects firebase to be working ok.
  * If not the function will fail (Silently)
@@ -14,10 +49,11 @@ let decoratorApp = admin.app();
  */
 function saveErrorToFirebase(err: any, api_name: string, methodName: string, args?: any[]): string | number {
     let timestamp = admin.database.ServerValue.TIMESTAMP
+
     let error = {
         timestamp: timestamp,
         error: (err instanceof Error) ? { message: err.message, callstack: err.stack } : err,
-        args: (!args.length) ? "no arguments" : args,
+        args: (!args.length) ? "no arguments" : sanitizeData(args),
         methodName: methodName
     };
     let keyVal: string | number;
