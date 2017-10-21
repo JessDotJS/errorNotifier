@@ -1,6 +1,5 @@
 import admin = require('firebase-admin');
 import { Observable } from 'rxjs/Observable';
-import { environment } from "./environment";
 
 /**
  * WARNING: You must have the app initialized for the notifier to work.
@@ -46,10 +45,11 @@ function sanitizeData(object: any, index?: number, array?: any[]): any {
  * If not the function will fail (Silently)
  * @param err The error that trigered the decorator
  * @param api_name The name of the api.
+ * @param methodName The name of the method.
+ * @param args args thrown by the error.
  */
 function saveErrorToFirebase(err: any, api_name: string, methodName: string, args?: any[]): string | number {
-    let timestamp = admin.database.ServerValue.TIMESTAMP
-
+    let timestamp = admin.database.ServerValue.TIMESTAMP;
     let error = {
         timestamp: timestamp,
         error: (err instanceof Error) ? { message: err.message, callstack: err.stack } : err,
