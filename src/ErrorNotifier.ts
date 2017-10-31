@@ -9,12 +9,14 @@ let decoratorApp = admin.app();
 /**
  * Cleans the arguments so thet don't have the forbiden chars.
  * @param object 
+ * @param index
+ * @param array
  */
 function sanitizeData(object: any, index?: number, array?: any[]): any {
     let new_obj: any;
     if (typeof object === 'object'){
         new_obj = {};
-        let new_key: string
+        let new_key: string;
         for(let key in object){
             if (key.includes('$') 
             || key.includes('.') 
