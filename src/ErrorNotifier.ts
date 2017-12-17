@@ -14,7 +14,7 @@ let decoratorApp = admin.app();
  */
 function sanitizeData(object: any, index?: number, array?: any[]): any {
     let new_obj: any;
-    if (typeof object === 'object'){
+    if (typeof object === 'object' && !(object instanceof Array)){
         new_obj = {};
         let new_key: string;
         for(let key in object){
@@ -34,7 +34,7 @@ function sanitizeData(object: any, index?: number, array?: any[]): any {
             } else {
                 new_key = key;
             }
-            new_obj[new_key] = object[key];
+            new_obj[new_key] = sanitizeData(object[key]);
         }
         return new_obj;
     } else {
