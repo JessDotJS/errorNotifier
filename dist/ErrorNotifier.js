@@ -5,7 +5,7 @@ var Observable_1 = require("rxjs/Observable");
 var decoratorApp = admin.app();
 function sanitizeData(object, index, array) {
     var new_obj;
-    if (typeof object === 'object') {
+    if (typeof object === 'object' && !(object instanceof Array)) {
         new_obj = {};
         var new_key = void 0;
         for (var key in object) {
@@ -15,19 +15,22 @@ function sanitizeData(object, index, array) {
                 || key.includes('/')
                 || key.includes('[')
                 || key.includes(']')) {
-                new_key = key.replace('$', '')
-                    .replace('.', '')
-                    .replace('#', '')
-                    .replace('/', '')
-                    .replace('[', '')
-                    .replace(']', '');
+                new_key = key.replace(/\$/g, '')
+                    .replace(/\./g, '')
+                    .replace(/\#/g, '')
+                    .replace(/\//g, '')
+                    .replace(/\[/g, '')
+                    .replace(/\]/g, '');
             }
             else {
                 new_key = key;
             }
-            new_obj[new_key] = object[key];
+            new_obj[new_key] = sanitizeData(object[key]);
         }
         return new_obj;
+    }
+    else if (typeof object === "undefined") {
+        return object + "";
     }
     else {
         return object;
@@ -45,7 +48,7 @@ function saveErrorToFirebase(err, api_name, methodName, args) {
     var key;
     if (err.keyVal) {
         keyVal = err.keyVal;
-        decoratorApp.database().ref("api_errors/" + api_name + keyVal).child('at').set(error, function (error) {
+        decoratorApp.database().ref("api_errors/" + api_name + keyVal).child('at').setWithPriority(error, -(new Date().getTime()), function (error) {
             if (error)
                 console.log(error);
         });

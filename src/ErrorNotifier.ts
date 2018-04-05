@@ -24,12 +24,12 @@ function sanitizeData(object: any, index?: number, array?: any[]): any {
             || key.includes('/') 
             || key.includes('[') 
             || key.includes(']')) {
-                new_key = key.replace('$','')
-                .replace('.','')
-                .replace('#','')
-                .replace('/','')
-                .replace('[','')
-                .replace(']','');
+                new_key = key.replace(/\$/g,'')
+                .replace(/\./g,'')
+                .replace(/\#/g,'')
+                .replace(/\//g,'')
+                .replace(/\[/g,'')
+                .replace(/\]/g,'');
 
             } else {
                 new_key = key;
@@ -37,6 +37,8 @@ function sanitizeData(object: any, index?: number, array?: any[]): any {
             new_obj[new_key] = sanitizeData(object[key]);
         }
         return new_obj;
+    } else if (typeof object === "undefined") {
+        return object + "";
     } else {
         return object;
     }
@@ -62,7 +64,7 @@ function saveErrorToFirebase(err: any, api_name: string, methodName: string, arg
     let key: admin.database.ThenableReference;
     if (err.keyVal) {
         keyVal = err.keyVal;
-        decoratorApp.database().ref(`api_errors/${api_name}` + keyVal).child('at').set(error, (error) => {
+        decoratorApp.database().ref(`api_errors/${api_name}` + keyVal).child('at').setWithPriority(error, -(new Date().getTime()) ,(error) => {
             /**
              * Maybe some logging here
              */
